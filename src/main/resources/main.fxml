@@ -1,5 +1,76 @@
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.control.Label?>
-<BorderPane>
-    <Label text="Hello, world" BorderPane.alignment="CENTER"/>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.canvas.Canvas?>
+<BorderPane xmlns:fx="http://javafx.com/fxml">
+    <top>
+        <MenuBar>
+            <Menu text="File">
+                <MenuItem text="New"/>
+                <MenuItem text="Open"/>
+            </Menu>
+            <Menu text="Edit">
+                <MenuItem text="Undo Typing"/>
+                <MenuItem text="Redo"/>
+            </Menu>
+        </MenuBar>
+    </top>
+
+    <center>
+        <BorderPane>
+            <top>
+                <ToolBar BorderPane.alignment="TOP_CENTER">
+                    <ToggleButton text="Сверточный слой">
+                        <toggleGroup>
+                            <ToggleGroup fx:id="instrumentToggleGroup"/>
+                        </toggleGroup>
+                    </ToggleButton>
+                    <ToggleButton text="Капсульный слой">
+                        <toggleGroup>
+                            <fx:reference source="instrumentToggleGroup"/>
+                        </toggleGroup>
+                    </ToggleButton>
+                    <ToggleButton text="Персептрон">
+                        <toggleGroup>
+                            <fx:reference source="instrumentToggleGroup"/>
+                        </toggleGroup>
+                    </ToggleButton>
+                    <ToggleButton text="Рекуррентный слой">
+                        <toggleGroup>
+                            <fx:reference source="instrumentToggleGroup"/>
+                        </toggleGroup>
+                    </ToggleButton>
+                </ToolBar>
+            </top>
+            <center>
+                <StackPane>
+                    <Canvas fx:id="canvasCell" width="300" height="300"/>
+                    <!--                <Canvas fx:id="canvas" onMousePressed="#onMousePressed" onMouseDragged="#onMouseDragged" onMouseReleased="#onMouseReleased"/>-->
+                </StackPane>
+            </center>
+        </BorderPane>
+
+    </center>
+    <bottom>
+        <GridPane>
+            <rowConstraints>
+                <RowConstraints prefHeight="30"/>
+            </rowConstraints>
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES"/>
+            </columnConstraints>
+            <ToolBar>
+                <FlowPane>
+                    <Button text="Одна информация"/>
+                    <Button text="Другая информация" alignment="CENTER_RIGHT"/>
+                    <Button text="Третья информация" alignment="CENTER_RIGHT"/>
+                </FlowPane>
+            </ToolBar>
+        </GridPane>
+    </bottom>
 </BorderPane>

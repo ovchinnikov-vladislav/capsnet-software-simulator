@@ -23,14 +23,11 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        URL url = App.class.getResource("/main.fxml");
-        Parent root = FXMLLoader.load(url);
+        Parent root = FXMLLoader.load(getClass().getResource("/main.fxml"));
 
-        Scene scene = new Scene(root, 300, 300);
-
+        Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Software Simulator CapsNet");
-
         primaryStage.show();
     }
 }
