@@ -1,12 +1,17 @@
+// Для создания *.exe
 import edu.sc.seis.launch4j.tasks.Launch4jLibraryTask
 
-plugins {
-    id 'java'
-    id 'idea'
-    id 'edu.sc.seis.launch4j' version '2.4.6'
-    id 'application'
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.Files
 
-    id 'org.openjfx.javafxplugin' version '0.0.9'
+plugins {
+    id 'java' // основные таски для сборки проекта jar
+    id 'idea'
+    id 'edu.sc.seis.launch4j' version '2.4.6' // для создания exe
+    id 'application' // запуск приложения
+
+    id 'org.openjfx.javafxplugin' version '0.0.9' // для подключения javafx
 }
 
 repositories {
@@ -14,55 +19,53 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.google.guava:guava:29.0-jre'
 
     testImplementation 'junit:junit:4.13'
 }
 
-project.ext.version = '0.0.1-alpha'
-project.ext.name = 'capsnet-software-simulator'
+project.ext.version = '1.0-SNAPSHOT'
+project.ext.name = 'javafx-gradle-template'
 project.ext.mainClassName = 'ml.ovcorp.capsnet.simulator.App'
 
+// Определение класса с входной точкой в приложение
 application {
     mainClassName = project.ext.mainClassName
 }
 
+// Подключение необходимых модулей javafx + версия библиотеки javafx
 javafx {
     version = "14"
-    modules = [ "javafx.controls", "javafx.fxml" ]
+    modules = ["javafx.controls", "javafx.fxml"]
 }
 
+// Установка имени собираемого архива jar проекта
 jar {
-    archiveBaseName.set(project.ext.name)
+    archiveBaseName.set(project.ext.name as String)
 }
 
-task copyDepn(type: Copy) {
-    from(configurations.runtimeClasspath)
-    into project.file('build/libs/libs')
-}
-
-task copyJarToBin(type: Copy) {
-    from file("build/libs/" + project.ext.name + ".jar")
-    into file("build/bin")
-}
-
-task jarWithDependencies(type: Jar) {
+// Сборка jar со всеми классами других либ, т.е. получаем так называемый flatJar (толстый Jar)
+// TODO: Данная стандия в данный момент работает некорректно (JAR-файл собирается, программа не запускается)
+task packageToJarWithDependencies(type: Jar) {
     manifest {
-        def classPathArray = configurations.runtimeClasspath.collect { it.getName() }
-
-        def classPathResult = 'libs/' + classPathArray.join(' libs/')
-
         attributes 'Main-Class': project.ext.mainClassName
-        attributes 'Class-Path': classPathResult
     }
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
 
-task jarAndLibs(type: Jar) {
+packageToJarWithDependencies.dependsOn build
+
+// Копирование всех подгруженных зависимостей в папку libs проекта
+task copyDependencies(type: Copy) {
+    from(configurations.runtimeClasspath)
+    into project.file("$buildDir/libs/libs")
+}
+
+// Сборка jar + установка в class-path манифеста путей к либам, находящимся в папке libs,
+// которая находится в корне с собираемым jar
+task packageToJarAndLibs(type: Jar) {
     manifest {
         def classPathArray = configurations.runtimeClasspath.collect { it.getName() }
-
         def classPathResult = 'libs/' + classPathArray.join(' libs/')
 
         attributes 'Main-Class': project.ext.mainClassName
@@ -72,74 +75,82 @@ task jarAndLibs(type: Jar) {
     with jar
 }
 
-// Сборка exe
-task buildExe(type: Launch4jLibraryTask) {
-    def classPathArray = configurations.runtimeClasspath.collect { it.getName() }
+packageToJarAndLibs.dependsOn(build, copyDependencies)
 
+// Копирование целевого Jar в папку bin
+task copyJarToBin(type: Copy) {
+    from file("$buildDir/libs/" + (project.ext.name as String) + ".jar")
+    into file("$buildDir/bin")
+}
+
+// Указывать в этой стандии в зависимости от требований - либо packageToJarAndLibs, либо packageToJarWithDependencies
+copyJarToBin.dependsOn packageToJarAndLibs
+
+// Сборка exe с помощью Launch4J для исполнения в Windows
+task packageWithExe(type: Launch4jLibraryTask) {
+    def classPathArray = configurations.runtimeClasspath.collect { it.getName() }
     def classPathResult = 'libs/' + classPathArray.join(';libs/')
 
     headerType = "gui"
     libraryDir = "libs"
     outputDir = "bin"
     mainClassName = project.ext.mainClassName
-    outfile = "capsnss.exe"
+    outfile = (project.ext.name as String) + '.exe'
     version = project.ext.version
 
-    Set<String> sets = new HashSet<String>()
+    List<String> opts = new ArrayList<>()
+    opts.add('--module-path')
+    opts.add(classPathResult)
+    opts.add('--add-modules')
+    opts.add(javafx.modules.join(","))
 
-    def modules = javafx.modules.join(",")
-    sets.add('--module-path "' + classPathResult + '" --add-modules "' + modules + '"')
-
-    jvmOptions = sets
+    jvmOptions = opts
     // icon = "${projectDir}/src/main/resources/images/icon.ico"
-    jar = "../libs/" + project.ext.name + ".jar"
+    jar = "../libs/" + (project.ext.name as String) + ".jar"
+
 }
 
-task buildScripts(type: CreateStartScripts) {
+packageWithExe.dependsOn copyJarToBin
+
+// Построение скриптов для запуска в Windows (bat) и Unix (sh)
+task packageWithScripts(type: CreateStartScripts) {
 
     outputDir = file('build/bin')
     applicationName = project.ext.name
     classpath = null
 
     def classPathArray = configurations.runtimeClasspath.collect { it.getName() }
-
     def classPathResult = 'libs/' + classPathArray.join(';libs/')
-
-    def modules = javafx.modules.join(",")
 
     List<String> opts = new ArrayList<>()
     opts.add('--module-path')
     opts.add(classPathResult)
     opts.add('--add-modules')
-    opts.add(modules)
+    opts.add(javafx.modules.join(","))
 
     defaultJvmOpts = opts
-    mainClass.set('-jar ' + project.ext.name + '.jar')
+    mainClass.set('-jar ' + (project.ext.name as String) + '.jar')
 }
 
-task cleanTempJar(type: Delete) {
-    delete fileTree("$buildDir/bin/libs").matching {
-        include project.ext.name + ".jar"
+packageWithScripts.dependsOn copyJarToBin
+
+// Выполнение всех стадий для упаковки приложения в исполняемые файлы
+task packageAll {
+    doLast {
+        Path path = Paths.get("$buildDir/bin/libs/" + (project.ext.name as String) + '.jar')
+        if (Files.exists(path)) {
+            Files.delete(path)
+        }
     }
 }
 
-task buildAll {}
+packageAll.dependsOn(packageWithExe, packageWithScripts)
 
 sourceSets {
     main {
-        output.resourcesDir = "build/classes/java/main"
+        output.resourcesDir = "$buildDir/classes/java/main"
     }
     test {
-        output.resourcesDir = "build/classes/java/test"
+        output.resourcesDir = "$buildDir/classes/java/test"
     }
 }
-
-jarWithDependencies.dependsOn copyDepn
-jarAndLibs.dependsOn copyDepn
-buildExe.dependsOn jarAndLibs
-buildScripts.dependsOn copyJarToBin
-buildScripts.dependsOn jarAndLibs
-
-cleanTempJar.dependsOn buildScripts
-buildAll.dependsOn buildExe
-buildAll.dependsOn buildScripts

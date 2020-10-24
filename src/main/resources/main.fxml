@@ -7,7 +7,9 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.scene.canvas.Canvas?>
-<BorderPane xmlns:fx="http://javafx.com/fxml">
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="ml.ovcorp.capsnet.simulator.controller.MainController">
     <top>
         <MenuBar>
             <Menu text="File">
@@ -25,9 +27,14 @@
         <BorderPane>
             <top>
                 <ToolBar BorderPane.alignment="TOP_CENTER">
-                    <ToggleButton text="Сверточный слой">
+                    <ToggleButton text="Входной слой">
                         <toggleGroup>
                             <ToggleGroup fx:id="instrumentToggleGroup"/>
+                        </toggleGroup>
+                    </ToggleButton>
+                    <ToggleButton fx:id="convLayerButton" text="Сверточный слой">
+                        <toggleGroup>
+                            <fx:reference source="instrumentToggleGroup"/>
                         </toggleGroup>
                     </ToggleButton>
                     <ToggleButton text="Капсульный слой">
@@ -48,29 +55,26 @@
                 </ToolBar>
             </top>
             <center>
-                <StackPane>
-                    <Canvas fx:id="canvasCell" width="300" height="300"/>
-                    <!--                <Canvas fx:id="canvas" onMousePressed="#onMousePressed" onMouseDragged="#onMouseDragged" onMouseReleased="#onMouseReleased"/>-->
-                </StackPane>
+                <Pane fx:id="canvasPane"/>
             </center>
         </BorderPane>
 
     </center>
     <bottom>
-        <GridPane>
-            <rowConstraints>
-                <RowConstraints prefHeight="30"/>
-            </rowConstraints>
+        <GridPane stylesheets="@css/bottom.css">
             <columnConstraints>
+                <ColumnConstraints hgrow="ALWAYS"/>
+                <ColumnConstraints hgrow="SOMETIMES"/>
+                <ColumnConstraints hgrow="SOMETIMES"/>
                 <ColumnConstraints hgrow="SOMETIMES"/>
             </columnConstraints>
-            <ToolBar>
-                <FlowPane>
-                    <Button text="Одна информация"/>
-                    <Button text="Другая информация" alignment="CENTER_RIGHT"/>
-                    <Button text="Третья информация" alignment="CENTER_RIGHT"/>
-                </FlowPane>
-            </ToolBar>
+            <Separator GridPane.rowIndex="0" GridPane.columnSpan="4">
+                <GridPane.margin>
+                    <Insets bottom="22"/>
+                </GridPane.margin>
+            </Separator>
+            <Button fx:id="infoHoverDrawnObjectButton" styleClass="button-bottom" text="Выбранный объект" GridPane.columnIndex="1" visible="false"/>
+            <Button fx:id="infoOperationButton" styleClass="button-bottom" text="Ожидание выбора операции" GridPane.columnIndex="2"/>
         </GridPane>
     </bottom>
 </BorderPane>

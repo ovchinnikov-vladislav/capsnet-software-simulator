@@ -1,0 +1,10 @@
+.button-bottom {
+    -fx-background-radius: 0;
+    -fx-font-size: 10;
+    -fx-background-color: rgba(0, 0, 0, 0);
+    -fx-border-color: rgba(0, 0, 0, 0);
+}
+
+.button-bottom:hover {
+    -fx-background-color: rgb(202, 202, 202);
+}
